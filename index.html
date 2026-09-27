@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="FacturePro - Gestion de factures et achats professionnelle">
+    <title>FacturePro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+<base target="_blank">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">FP</div>
+            <div class="logo-text">
+                <h1 data-i18n="appName">FacturePro</h1>
+                <span data-i18n="appSubtitle">🌐 + Factures & Achats</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="switcher-group">
+                <button class="lang-btn active" onclick="setLang('fr')" title="Français">FR</button>
+                <button class="lang-btn" onclick="setLang('ar')" title="العربية">AR</button>
+                <button class="lang-btn" onclick="setLang('en')" title="English">EN</button>
+            </div>
+            <button class="theme-btn" onclick="toggleTheme()" title="Dark/Light">🌓</button>
+            <button class="badge badge-primary" onclick="toggleChatbot()">🤖 <span data-i18n="assistant">Assistant Pro</span></button>
+        </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('create')" data-i18n="tabCreate">📝 Créer Facture</button>
+        <button class="tab" onclick="switchTab('list')" data-i18n="tabList">📋 Mes Factures</button>
+        <button class="tab" onclick="switchTab('achats')" data-i18n="tabAchats">🧾 Achats</button>
+        <button class="tab" onclick="switchTab('dashboard')" data-i18n="tabDashboard">📊 Dashboard</button>
+    </div>
+
+    <!-- TAB: CREATE -->
+    <div id="tab-create" class="tab-content active">
+        <div class="container">
+            <div class="grid-2">
+                <div>
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div class="card-header">
+                            <div class="card-title" data-i18n="yourCompany">🏢 Votre Entreprise</div>
+                            <div class="logo-upload" onclick="document.getElementById('logoInput').click()">
+                                <span id="logoPreview">📷<br>Logo</span>
+                                <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogo(event)">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label data-i18n="companyName">Nom de l'entreprise</label>
+                                <input type="text" id="compName" placeholder="Votre Société" value="Votre Entreprise" oninput="updatePreview(); saveCompanyInfo();">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-i18n="email">Email</label>
+                                    <input type="email" id="compEmail" placeholder="contact@entreprise.com" oninput="updatePreview(); saveCompanyInfo();">
+                                </div>
+                                <div class="form-group">
+                                    <label data-i18n="phone">Téléphone</label>
+                                    <input type="text" id="compPhone" placeholder="+216 XX XXX XXX" oninput="updatePreview(); saveCompanyInfo();">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="address">Adresse</label>
+                                <input type="text" id="compAddress" placeholder="Rue, Ville, Code Postal" oninput="updatePreview(); saveCompanyInfo();">
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="taxId">Matricule Fiscale</label>
+                                <input type="text" id="compMF" placeholder="MF: XXXXXX" oninput="updatePreview(); saveCompanyInfo();">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div class="card-header">
+                            <div class="card-title" data-i18n="clientInfo">👤 Informations Client</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label><span data-i18n="clientName">Nom du client</span> <span class="required">*</span></label>
+                                <input type="text" id="clientName" placeholder="Nom complet" oninput="updatePreview()">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-i18n="email">Email</label>
+                                    <input type="email" id="clientEmail" placeholder="client@email.com" oninput="updatePreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label data-i18n="phone">Téléphone</label>
+                                    <input type="text" id="clientPhone" placeholder="+216 XX XXX XXX" oninput="updatePreview()">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="billingAddress">Adresse de facturation</label>
+                                <input type="text" id="clientAddress" placeholder="Adresse complète du client" oninput="updatePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div class="card-header">
+                            <div class="card-title" data-i18n="invoiceDetails">📄 Détails de la Facture</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row-3">
+                                <div class="form-group">
+                                    <label data-i18n="invoiceNum">N° Facture</label>
+                                    <input type="text" id="invNum" value="INV-001" oninput="updatePreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label data-i18n="issueDate">Date d'émission</label>
+                                    <div class="input-icon">
+                                        <input type="date" id="invDate" onchange="updatePreview()">
+                                        <span class="icon">📅</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label data-i18n="dueDate">Date d'échéance</label>
+                                    <div class="input-icon">
+                                        <input type="date" id="invDue" onchange="updatePreview()">
+                                        <span class="icon">📅</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="item">Article</th>
+                                        <th data-i18n="price">Prix (DT)</th>
+                                        <th data-i18n="qty">Qté</th>
+                                        <th data-i18n="total">Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsBody">
+                                    <tr>
+                                        <td class="item-desc"><input type="text" class="item-desc-input" placeholder="Description" oninput="updatePreview()"></td>
+                                        <td class="item-num"><input type="number" class="item-price" value="0" min="0" step="0.001" oninput="updatePreview()"></td>
+                                        <td class="item-num"><input type="number" class="item-qty" value="1" min="1" oninput="updatePreview()"></td>
+                                        <td class="item-total">0.000 DT</td>
+                                        <td><button class="btn-remove-item" onclick="removeItem(this)">🗑️</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <button class="btn-add-item" onclick="addItem()">➕ <span data-i18n="addItem">Ajouter un article</span></button>
+
+                            <div class="totals" style="margin-top: 20px;">
+                                <div class="total-row">
+                                    <span class="label" data-i18n="subtotal">Sous-total</span>
+                                    <span class="value" id="subtotal">0.000 DT</span>
+                                </div>
+                                <div class="total-row">
+                                    <span class="label">TVA <input type="number" id="tvaRate" class="tva-input" value="19" min="0" max="100" oninput="updatePreview()"> %</span>
+                                    <span class="value" id="tvaAmount">0.000 DT</span>
+                                </div>
+                                <div class="total-row">
+                                    <span class="label"><span data-i18n="discount">Remise</span> <input type="number" id="remiseRate" class="tva-input" value="0" min="0" max="100" oninput="updatePreview()"> %</span>
+                                    <span class="value" id="remiseAmount" style="color: var(--success);">-0.000 DT</span>
+                                </div>
+                                <div class="total-row grand-total">
+                                    <span class="label" data-i18n="grandTotal">Total TTC</span>
+                                    <span class="value" id="grandTotal">0.000 DT</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 20px;">
+                                <label data-i18n="notes">Notes / Conditions</label>
+                                <textarea id="notes" placeholder="Conditions de paiement..." oninput="updatePreview()">Payable à réception de la facture. Merci pour votre confiance.</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="font-size:14px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;" data-i18n="livePreview">Aperçu en Direct</h3>
+                        <span class="badge badge-success" style="font-size:11px;">🟢 <span data-i18n="updated">Mis à jour</span></span>
+                    </div>
+                    <div class="preview-container" id="preview">
+                        <div class="preview-header">
+                            <div class="preview-logo" id="previewLogo">V</div>
+                            <div class="preview-title">
+                                <h2 data-i18n="invoiceWord">FACTURE</h2>
+                                <div class="inv-num">N° <span id="pInvNum">INV-001</span></div>
+                                <div class="inv-date"><span data-i18n="dateLabel">Date:</span> <span id="pInvDate">--/--/----</span></div>
+                                <div class="inv-date"><span data-i18n="dueLabel">Échéance:</span> <span id="pInvDue">--/--/----</span></div>
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+                            <div class="preview-section">
+                                <h4 data-i18n="from">De</h4>
+                                <p id="pCompName" style="font-size:18px; margin-bottom:4px;">Votre Entreprise</p>
+                                <p id="pCompEmail" style="font-size:13px; color:var(--text-muted);"></p>
+                                <p id="pCompPhone" style="font-size:13px; color:var(--text-muted);"></p>
+                                <p id="pCompAddress" style="font-size:13px; color:var(--text-muted);"></p>
+                                <p id="pCompMF" style="font-size:13px; color:var(--text-muted); margin-top:4px;"></p>
+                            </div>
+                            <div class="preview-section" style="text-align:right;">
+                                <h4 data-i18n="billTo">Facturer à</h4>
+                                <p id="pClientName" style="font-size:18px; margin-bottom:4px;">Client</p>
+                                <p id="pClientEmail" style="font-size:13px; color:var(--text-muted);"></p>
+                                <p id="pClientPhone" style="font-size:13px; color:var(--text-muted);"></p>
+                                <p id="pClientAddress" style="font-size:13px; color:var(--text-muted);"></p>
+                            </div>
+                        </div>
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="desc">Description</th>
+                                    <th class="text-center" data-i18n="unitPrice">Prix Unitaire</th>
+                                    <th class="text-center" data-i18n="qty">Qté</th>
+                                    <th class="text-right" data-i18n="amount">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pItemsBody">
+                                <tr><td>Article sans description</td><td class="text-center">0.000 DT</td><td class="text-center">1</td><td class="text-right">0.000 DT</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="preview-totals">
+                            <div class="preview-total-row"><span class="label" data-i18n="subtotal">Sous-total</span><span class="value" id="pSubtotal">0.000 DT</span></div>
+                            <div class="preview-total-row" id="pRemiseRow" style="display:none;"><span class="label" data-i18n="discount">Remise</span><span class="value" id="pRemise" style="color: var(--success);">-0.000 DT</span></div>
+                            <div class="preview-total-row"><span class="label">TVA (19%)</span><span class="value" id="pTva">0.000 DT</span></div>
+                            <div class="preview-total-row grand"><span class="label" data-i18n="grandTotal">Total TTC</span><span class="value" id="pGrandTotal">0.000 DT</span></div>
+                        </div>
+                        <div class="preview-notes">
+                            <h4 data-i18n="notesConditions">Notes & Conditions</h4>
+                            <p id="pNotes">Payable à réception de la facture. Merci pour votre confiance.</p>
+                        </div>
+                        <div style="text-align:center; margin-top:60px; color:var(--text-muted); font-size:12px;" data-i18n="thankYou">Merci pour votre confiance!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="actions-bar">
+            <button class="btn btn-danger" onclick="downloadPDF()"><span id="btnDownloadPDF">📄 Télécharger PDF</span></button>
+            <button class="btn btn-success" onclick="saveInvoice()"><span id="btnSaveSQL">💾 Sauvegarder</span></button>
+            <button class="btn btn-outline" onclick="resetForm()"><span id="btnReset">🔄 Réinitialiser</span></button>
+            <span id="saveStatus" style="margin-left:auto; color:var(--text-muted); font-size:13px;"></span>
+        </div>
+    </div>
+
+    <!-- TAB: LIST -->
+    <div id="tab-list" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title" data-i18n="myInvoices">📋 Mes Factures</div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="searchInvoices" placeholder="Rechercher..." style="width:240px;" oninput="renderInvoiceList()">
+                        <button class="btn btn-primary btn-sm" onclick="switchTab('create')">+ <span data-i18n="newInvoice">Nouvelle</span></button>
+                    </div>
+                </div>
+                <div id="invoiceListContainer">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="invoiceNum">N° Facture</th>
+                                <th data-i18n="clientName">Client</th>
+                                <th data-i18n="dateLabel">Date</th>
+                                <th data-i18n="dueLabel">Échéance</th>
+                                <th data-i18n="grandTotal">Total TTC</th>
+                                <th data-i18n="status">Statut</th>
+                                <th data-i18n="actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: ACHATS -->
+    <div id="tab-achats" class="tab-content">
+        <div class="container">
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <div class="card-title" data-i18n="tabAchats">🧾 Achats / Factures Fournisseurs</div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="searchAchats" placeholder="Rechercher..." style="width:240px;" oninput="renderAchatList()">
+                        <button class="btn btn-achat btn-sm" onclick="document.getElementById('achatUploadInput').click()">📤 <span data-i18n="uploadAchat">Uploader Facture</span></button>
+                        <input type="file" id="achatUploadInput" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="handleAchatUpload(event)">
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="achatListContainer">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="invoiceNum">N° Achat</th>
+                                    <th>N° Facture Fourn.</th>
+                                    <th data-i18n="supplier">Fournisseur</th>
+                                    <th data-i18n="dateLabel">Date</th>
+                                    <th data-i18n="grandTotal">Montant</th>
+                                    <th data-i18n="file">Fichier</th>
+                                    <th data-i18n="actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="achatTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="achatEmpty" class="empty-state" style="display:none;">
+                        <div class="icon">🧾</div>
+                        <h3 data-i18n="noAchats">Aucun achat</h3>
+                        <p data-i18n="uploadDesc">Uploader une facture fournisseur pour commencer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+        <div class="container">
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                    <div class="card-title" data-i18n="sqlDashboard">📊 Dashboard</div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <input type="number" id="filterYear" min="2000" max="2100" onchange="loadDashboard()" style="width:90px;" placeholder="2026">
+                        <input type="number" id="filterMonth" min="1" max="12" onchange="loadDashboard()" style="width:70px;" placeholder="1-12">
+                        <input type="number" id="filterDay" min="1" max="31" onchange="loadDashboard()" style="width:65px;" placeholder="1-31">
+                        <button class="btn btn-outline btn-sm" onclick="clearDashFilters()">✕ <span data-i18n="clearFilters">Effacer</span></button>
+                        <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 <span data-i18n="refresh">Actualiser</span></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-stats">
+                        <div class="stat-box"><div class="number" id="dashCount">0</div><div class="label" data-i18n="invoicesInDB">Factures</div></div>
+                        <div class="stat-box"><div class="number" id="dashTotal">0</div><div class="label" data-i18n="totalRevenue">CA Ventes (DT)</div></div>
+                        <div class="stat-box"><div class="number" id="dashPaid">0</div><div class="label" data-i18n="paidInvoices">Payées</div></div>
+                        <div class="stat-box"><div class="number" id="dashPending">0</div><div class="label" data-i18n="pendingInvoices">En attente</div></div>
+                        <div class="stat-box"><div class="number" id="dashAchatCount">0</div><div class="label" data-i18n="achatsInDB">Achats</div></div>
+                        <div class="stat-box"><div class="number" id="dashAchatTotal">0</div><div class="label" data-i18n="totalAchats">Total Achats (DT)</div></div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title" data-i18n="revenueByMonth">📈 CA Ventes par Mois</div></div>
+                            <div class="card-body"><div class="chart-container"><canvas id="revenueChart"></canvas></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title" data-i18n="achatByMonth">📉 Achats par Mois</div></div>
+                            <div class="card-body"><div class="chart-container"><canvas id="achatChart"></canvas></div></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid" style="margin-top: 24px;">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title" data-i18n="statusDistribution">📊 Répartition Statuts</div></div>
+                            <div class="card-body"><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title" data-i18n="venteVsAchat">📊 Ventes vs Achats</div></div>
+                            <div class="card-body"><div class="chart-container"><canvas id="compareChart"></canvas></div></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header"><div class="card-title" data-i18n="topClients">🏆 Top Clients</div></div>
+                        <div class="card-body">
+                            <table class="data-table top-clients-table">
+                                <thead><tr><th>#</th><th data-i18n="clientName">Client</th><th data-i18n="invoices">Factures</th><th data-i18n="grandTotal">Total TTC</th><th>%</th></tr></thead>
+                                <tbody id="topClientsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header"><div class="card-title" data-i18n="monthlyTrend">📉 Tendance Mensuelle</div></div>
+                        <div class="card-body"><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+                    </div>
+
+                    <table class="data-table" style="margin-top: 24px;">
+                        <thead><tr><th data-i18n="invoiceNum">N°</th><th data-i18n="clientName">Client</th><th data-i18n="dateLabel">Date</th><th data-i18n="grandTotal">TTC</th><th data-i18n="actions">Action</th></tr></thead>
+                        <tbody id="dashTableBody"></tbody>
+                    </table>
+                    <div id="dashEmpty" class="empty-state" style="display:none;">
+                        <div class="icon">🗄️</div>
+                        <h3 data-i18n="noData">Aucune donnée</h3>
+                        <p data-i18n="clickRefresh">Cliquez sur Actualiser pour charger les données</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot -->
+    <button class="chatbot-btn" onclick="toggleChatbot()">💬<span class="notif" id="chatNotif">4</span></button>
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <span style="font-size:20px;">🤖</span>
+            <h3 data-i18n="assistantPro">Assistant Pro</h3>
+            <div class="status"><span class="dot"></span> <span data-i18n="online">En ligne</span></div>
+        </div>
+        <div class="chat-ai-panel">
+            <div class="chat-ai-row">
+                <button class="chat-ai-toggle" id="aiToggleBtn" onclick="toggleAiMode()" title="Activer/Désactiver Claude AI">✨ Groq OFF</button>
+                <button class="chat-quick-btn" onclick="testGeminiKey()">🔍 Test</button>
+                <button class="chat-quick-btn" onclick="showChatStats()">📊 Stats</button>
+                <button class="chat-quick-btn" onclick="promptApiKey()" title="Configurer clé API Claude">⚙️ API Key</button>
+            </div>
+            <div class="chat-ai-stat" id="aiTaskStats">Chatbot local actif</div>
+        </div>
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="chat-msg bot">
+                <strong data-i18n="chatWelcome">Salam! 👋</strong><br><br>
+                <span data-i18n="chatConnected">Que puis-je faire pour vous? Essayez:</span><br><br>
+                • <em>"Facture numero 3"</em> / <em>"فاتورة رقم 3"</em><br>
+                • <em>"Facture mt3 Ahmed"</em><br>
+                • <em>"Ch7al bitbi3a"</em> / <em>"Ch7al achat"</em><br>
+                • <em>"Creer facture"</em> — création interactive<br>
+                • <em>"Upload achat"</em> — uploader facture fournisseur
+            </div>
+        </div>
+        <div class="chat-quick" id="chatQuickButtons">
+            <button class="chat-quick-btn" onclick="setChatContext('vente')">💰 Vente</button>
+            <button class="chat-quick-btn" onclick="setChatContext('achat')">🧾 Achat</button>
+            <button class="chat-quick-btn" onclick="setChatContext('create')">📝 Créer</button>
+            <button class="chat-quick-btn" onclick="openChatSearch()">🔍 Chercher</button>
+            <button class="chat-quick-btn" onclick="sendQuick('aide')">❓ Aide</button>
+        </div>
+        <div style="display:flex; gap:8px; padding:8px 14px; background:var(--card-solid); border-top:1px solid var(--border); flex-shrink:0;">
+            <button id="chatWizardBtns" onclick="chatWizardBack()" style="flex:1; padding:8px; border-radius:10px; border:1.5px solid var(--border-strong); background:var(--bg); color:var(--text-muted); font-size:13px; font-weight:600; cursor:not-allowed; opacity:0.35; transition:all 0.2s; pointer-events:none;" title="Retour étape précédente">⬅️ Retour</button>
+            <button onclick="showChatStats()" style="flex:1; padding:8px; border-radius:10px; border:1.5px solid rgba(99,102,241,0.3); background:rgba(99,102,241,0.07); color:var(--primary-600); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;">📊 Stats</button>
+            <button id="chatAnnulerBtn" onclick="chatWizardCancel()" style="flex:1; padding:8px; border-radius:10px; border:1.5px solid rgba(244,63,94,0.3); background:rgba(244,63,94,0.07); color:var(--danger); font-size:13px; font-weight:600; cursor:not-allowed; opacity:0.35; transition:all 0.2s; pointer-events:none;" title="Annuler">❌ Annuler</button>
+        </div>
+        <div class="chat-input-area" style="flex-shrink:0;">
+            <input type="file" id="chatFileInput" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="handleChatFileUpload(event)">
+            <button class="chat-upload-btn" onclick="document.getElementById('chatFileInput').click()" title="Uploader facture">📎</button>
+            <button class="chat-search-btn" onclick="triggerChatSearch()" title="Rechercher facture ou achat">🔍</button>
+            <input type="text" class="chat-input" id="chatInput" placeholder="Écrivez votre message..." onkeypress="if(event.key==='Enter')sendChat()">
+            <button class="chat-send" onclick="sendChat()">➤</button>
+        </div>
+    </div>
+
+    <!-- View Modal -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <h2 data-i18n="viewInvoice">👁️ Voir la Facture</h2>
+                <button class="modal-close" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeViewModal()" data-i18n="close">Fermer</button>
+                <button class="btn btn-warning" onclick="printViewInvoice()">📄 <span data-i18n="downloadPDF">Télécharger PDF</span></button>
+                <button class="btn btn-primary" onclick="editFromView()">✏️ <span data-i18n="editInvoice">Modifier</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <h2 data-i18n="editInvoice">✏️ Modifier la Facture</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="editModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()" data-i18n="cancel">Annuler</button>
+                <button class="btn btn-warning" onclick="downloadInvoicePDF()">📄 <span data-i18n="downloadPDF">Télécharger PDF</span></button>
+                <button class="btn btn-primary" onclick="saveEdit()">💾 <span data-i18n="save">Enregistrer</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achat View Modal -->
+    <div class="modal-overlay" id="achatViewModal">
+        <div class="modal wide">
+            <div class="modal-header">
+                <h2>🧾 <span data-i18n="viewAchat">Voir Achat</span></h2>
+                <button class="modal-close" onclick="closeAchatViewModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="achatViewModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAchatViewModal()" data-i18n="close">Fermer</button>
+                <button class="btn btn-danger" onclick="deleteAchatFromView()">🗑️ <span data-i18n="delete">Supprimer</span></button>
+                <button class="btn btn-achat" onclick="editAchatFromView()">✏️ <span data-i18n="edit">Modifier</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achat Edit Modal -->
+    <div class="modal-overlay" id="achatEditModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>✏️ <span data-i18n="editAchat">Modifier Achat</span></h2>
+                <button class="modal-close" onclick="closeAchatEditModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="achatEditModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAchatEditModal()" data-i18n="cancel">Annuler</button>
+                <button class="btn btn-achat" onclick="saveAchatEdit()">💾 <span data-i18n="save">Enregistrer</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-overlay" id="confirmModal" style="z-index:9999;">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle">Confirmer</h2>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+                <p id="confirmModalMsg" style="color:var(--text-muted);font-size:14px;margin-top:8px;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeConfirmModal()">Annuler</button>
+                <button class="btn btn-danger" id="confirmModalOkBtn" onclick="execConfirmModal()">🗑️ Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Search Modal -->
+    <div class="modal-overlay" id="chatSearchModal" style="z-index:9998;">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>🔍 Rechercher</h2>
+                <button class="modal-close" onclick="closeChatSearch()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <div style="display:flex;gap:8px;margin-bottom:16px;">
+                    <input type="text" id="chatSearchInput" placeholder="N° facture, nom client, fournisseur..." 
+                        style="flex:1;" oninput="runChatSearch()" onkeypress="if(event.key==='Enter')runChatSearch()">
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-sm" id="searchTypeVente" onclick="setChatSearchType('vente')" 
+                            style="background:linear-gradient(135deg,#6366f1,#818cf8);color:white;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;">💰 Ventes</button>
+                        <button class="btn btn-sm" id="searchTypeAchat" onclick="setChatSearchType('achat')"
+                            style="background:var(--card-solid);color:var(--text-muted);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border-strong);">🧾 Achats</button>
+                        <button class="btn btn-sm" id="searchTypeAll" onclick="setChatSearchType('all')"
+                            style="background:var(--card-solid);color:var(--text-muted);padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border-strong);">🌐 Tout</button>
+                    </div>
+                </div>
+                <div id="chatSearchResults" style="max-height:320px;overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+    <div id="printOnly" class="print-only"></div>
+        <script src="assets/js/config.js"></script>
+    <script src="assets/js/i18n.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/company.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/invoice-form.js"></script>
+    <script src="assets/js/invoices.js"></script>
+    <script src="assets/js/achats.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+    <script src="assets/js/pdf.js"></script>
+    <script src="assets/js/chatbot.js"></script>
+    <script src="assets/js/notifications.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "facturepro",
+  "version": "1.0.0",
+  "description": "FacturePro - Gestion de factures et achats",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "init-db": "node -e \"fetch('http://localhost:'+(process.env.PORT||3000)+'/api/init-db',{method:'POST'}).then(r=>r.json()).then(console.log)\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5"
+  }
+}
