@@ -44,6 +44,35 @@ async function getPool() {
     return pool;
 }
 
+// ---------- Email notification: invoice marked as paid ----------
+async function sendPaidInvoiceNotification(invoice) {
+    const recipient = (process.env.NOTIFY_EMAIL || invoice.compEmail || '').trim();
+    if (!recipient) { console.warn('Paid invoice notification skipped: recipient email missing.'); return; }
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.warn('Paid invoice notification skipped: SMTP settings are not configured.'); return;
+    }
+    const transporter = require('nodemailer').createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: Number(process.env.SMTP_PORT || 587) === 465,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: recipient,
+        subject: 'Facture ' + (invoice.numero || '') + ' payée - FacturePro',
+        text: [
+            'Bonne nouvelle ! Une facture vient d’être marquée comme payée.',
+            '',
+            'Facture : ' + (invoice.numero || '-'),
+            'Client : ' + (invoice.clientName || '-'),
+            'Montant : ' + Number(invoice.total || 0).toFixed(3) + ' DT',
+            'Date : ' + (invoice.date || '-'),
+            '',
+            'Notification automatique de FacturePro.'
+        ].join('\n')
+    });
+}
 // ---------- CRUD Factures ----------
 app.get('/api/invoices', async (req, res) => {
     try {
@@ -72,7 +101,10 @@ app.post('/api/invoices', async (req, res) => {
 app.put('/api/invoices/:id', async (req, res) => {
     const b = req.body;
     try {
-        await (await getPool()).query(
+        const db = await getPool();
+        const [existingRows] = await db.query('SELECT status FROM invoices WHERE id=?', [req.params.id]);
+        const wasPaid = existingRows.length > 0 && existingRows[0].status === 'paid';
+        await db.query(
             `UPDATE invoices SET numero=?, clientName=?, clientEmail=?, clientPhone=?, clientAddress=?,
                                  compName=?, compEmail=?, compPhone=?, compAddress=?, compMF=?, compLogo=?,
                                  date=?, due=?, items=?, tva=?, remise=?, notes=?, status=?, total=?,
@@ -82,6 +114,10 @@ app.put('/api/invoices/:id', async (req, res) => {
              b.date, b.due, JSON.stringify(b.items || []), b.tva || 0, b.remise || 0,
              b.notes || '', b.status || 'pending', b.total || 0, req.params.id]
         );
+        if (b.status === 'paid' && !wasPaid) {
+            sendPaidInvoiceNotification({ ...b, id: Number(req.params.id) })
+                .catch(error => console.error('Paid invoice email failed:', error.message));
+        }
         res.json({ id: Number(req.params.id), ...b });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
